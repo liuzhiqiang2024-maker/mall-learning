@@ -1,6 +1,7 @@
 package com.example.malldemo.controller;
 
 import com.example.malldemo.common.Result;
+import com.example.malldemo.dto.PageResult;
 import com.example.malldemo.service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -30,5 +31,15 @@ public class OrderController {
                                             Long orderId){
         Orders orders=orderService.getOrderById(orderId);
         return Result.success(orders);
+    }
+    @GetMapping("/page")
+    public Result<PageResult<Orders>>getOrders(
+            @RequestParam @NotNull(message = "页码不能为空")@Positive(message = "页码必须大于0")Integer pageNum,
+            @RequestParam @NotNull(message = "每页条数不能为空")@Positive(message = "每页条数必须大于0")Integer pageSize
+    ){
+        //调用service
+        PageResult<Orders>pageResult=orderService.getOrderPage(pageNum,pageSize);
+        //包装成统一Result返回
+        return Result.success(pageResult);
     }
 }

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.malldemo.mapper.OrderMapper">
+
+    <!-- 这里放你之前已经写好的所有SQL：根据id查询订单、新增订单等 -->
+
+    <!-- 新增：分页查询当前页订单 -->
+    <select id="selectOrderPage" resultType="com.example.malldemo.entity.Orders">
+        select id, user_id, product_id, quantity, total_price, order_status, create_time
+        from orders
+                 limit #{offset}, #{pageSize}
+    </select>
+
+    <!-- 新增：查询订单总条数 -->
+    <select id="selectOrderCount" resultType="java.lang.Long">
+        select count(*) from orders
+    </select>
+</mapper>

@@ -1,4 +1,5 @@
 package com.example.malldemo.service.impl;
+import com.example.malldemo.dto.PageResult;
 import com.example.malldemo.entity.Orders;
 import com.example.malldemo.entity.Product;
 import com.example.malldemo.mapper.OrderMapper;
@@ -12,6 +13,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.malldemo.exception.BusinessException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
+
 import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Service
@@ -56,6 +59,18 @@ public class OrderServiceImpl implements OrderService {
         return orders;
 
     }
+    @Override
+    public PageResult<Orders> getOrderPage(Integer pageNum, Integer pageSize) {
+        // 1. 计算偏移量
+        Integer offset = (pageNum - 1) * pageSize;
+        // 2. 查询当前页数据
+        List<Orders> records = orderMapper.selectOrderPage(offset, pageSize);
+        // 3. 查询总条数
+        Long total = orderMapper.selectOrderCount();
+        // 4. 调用我们写好的静态方法组装分页结果
+        return PageResult.build(records, total, pageSize);
+    }
+
 
 
 }
