@@ -1,5 +1,6 @@
 package com.example.malldemo.service.impl;
 import com.example.malldemo.dto.OrderQueryDTO;
+import com.example.malldemo.dto.OrderStatusUpdateDTO;
 import com.example.malldemo.dto.PageResult;
 import com.example.malldemo.entity.Orders;
 import com.example.malldemo.entity.Product;
@@ -16,6 +17,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import lombok.extern.slf4j.Slf4j;
 @Slf4j
@@ -87,7 +89,48 @@ public class OrderServiceImpl implements OrderService {
         // 4. 组装分页对象返回
         return PageResult.build(orderList, total, queryDTO.getPageNum(), queryDTO.getPageSize());
     }
-
-
+    @Override
+    public Orders updateOrderStatus(OrderStatusUpdateDTO dto) {
+        //1.查询订单
+        Orders order = orderMapper.selectOrderById(dto.getOrderId());
+        //2.判断订单是否存在
+        if (order == null) {
+            throw new BusinessException(400, "订单不存在");
+        }
+        Integer oldStatus = order.getOrderStatus();
+        Integer newStatus = dto.getStatus();
+        //3.判断新状态是否合法，只能0.1，2，3，4
+        if (!Set.of(0,1, 2, 3, 4).contains(newStatus)) {
+            throw new BusinessException(400, "订单状态参数非法");
+        }
+        //4.状态流转校验
+        boolean allow = false;
+        if (oldStatus == 0) {
+            if(newStatus ==1){
+                allow = true;
+            }
+        }else if (oldStatus == 1) {
+            //待付款；可以转2，3
+            if (newStatus == 2 || newStatus == 3) {
+                allow = true;
+            }
+        } else if (oldStatus == 2) {
+            //已支付：只能转4
+            if (newStatus == 4) {
+                allow = true;
+            }
+        }
+        //oldStatus=3、4 是终态，allow保持false
+        if (!allow) {
+            throw new BusinessException(400, "订单状态不允许变更");
+        }
+        // 5. 执行更新
+        int rows = orderMapper.updateOrderStatus(dto.getOrderId(), newStatus);
+        if (rows != 1) {
+            throw new BusinessException(400,"订单状态更新失败");
+        }
+        // 6. 更新成功，重新查询最新订单返回
+        return orderMapper.selectOrderById(dto.getOrderId());
+    }
 
 }

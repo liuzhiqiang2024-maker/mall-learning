@@ -25,5 +25,17 @@
         </where>
         limit #{offset}, #{pageSize}
     </select>
+    <!-- 根据id查询订单 -->
+    <select id="selectOrderById" resultType="com.example.malldemo.entity.Orders" >
+        select id, user_id, product_id, order_status, total_price, create_time
+        from orders
+        where id = #{orderId}
+    </select>
+    <!-- 更新订单状态 -->
+    <update id="updateOrderStatus">
+        update orders
+        set order_status=#{newStatus}
+        where id=#{orderId}
+    </update>
 
 </mapper>

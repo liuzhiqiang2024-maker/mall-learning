@@ -2,7 +2,10 @@ package com.example.malldemo.controller;
 
 import com.example.malldemo.common.Result;
 import com.example.malldemo.dto.OrderQueryDTO;
+import com.example.malldemo.dto.OrderStatusUpdateDTO;
+import com.example.malldemo.dto.OrderStatusVO;
 import com.example.malldemo.dto.PageResult;
+import com.example.malldemo.mapper.OrderMapper;
 import com.example.malldemo.service.OrderService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +20,9 @@ import jakarta.validation.constraints.Positive;
 public class OrderController {
     @Autowired
     private OrderService orderService;
+    @Autowired
+    private OrderMapper orderMapper;
+
     @PostMapping("/create")
     public Result<Orders> createOrder(
             @RequestParam Long productId,
@@ -51,5 +57,13 @@ public class OrderController {
         PageResult<Orders>pageResult=orderService.queryOrderPage(queryDTO);
         return Result.success(pageResult);
 
+    }
+    @PostMapping("/updateStatus")
+    public Result<OrderStatusVO> updateStatus(@RequestBody @Valid OrderStatusUpdateDTO dto){
+        Orders latestOrder=orderService.updateOrderStatus(dto);
+        OrderStatusVO vo=new OrderStatusVO();
+        vo.setOrderId(latestOrder.getId());
+        vo.setStatus(latestOrder.getOrderStatus());
+        return Result.success(vo);
     }
 }
