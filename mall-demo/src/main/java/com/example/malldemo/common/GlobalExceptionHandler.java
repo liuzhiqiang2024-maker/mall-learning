@@ -3,6 +3,7 @@ import com.example.malldemo.exception.BusinessException;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -47,5 +48,10 @@ public class GlobalExceptionHandler {
         }
         return Result.fail(400,"参数校验失败",errorsMsgList);
     }
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public Result<?> handleHttpMessageNotReadableException(HttpMessageNotReadableException e) {
+        return Result.fail(400,"参数类型错误，请检查传入数据类型",null);
+    }
+
 
 }
