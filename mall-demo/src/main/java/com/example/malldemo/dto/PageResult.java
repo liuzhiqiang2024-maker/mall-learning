@@ -1,46 +1,29 @@
 package com.example.malldemo.dto;
-
+import lombok.Data;
 import java.util.List;
+@Data
 public class PageResult<T> {
     private List<T> records;
     private Long total;
     private Long pages;
+    private Integer PageNum;
+    private Integer PageSize;
 
     // 泛型T，代表records里面放什么类型的数据
-    public static <T> PageResult<T> build(List<T> records, Long total, Integer pageSize) {
+    public static <T> PageResult<T> build(List<T> records, Long total, Integer pageNum,Integer pageSize) {
         PageResult<T> pageResult = new PageResult<>();
         pageResult.setRecords(records);
         pageResult.setTotal(total);
-
-        // 先声明变量；
-        Long pages;
-        if (total == 0) {
-            pages = 0L;
-        } else {
-            pages = total % pageSize == 0 ? total / pageSize : total / pageSize + 1;
-        }
+        pageResult.setPageNum(pageNum);
+        pageResult.setPageSize(pageSize);
+        // 计算总页数
+        long pages = (total + pageSize - 1) / pageSize;
         pageResult.setPages(pages);
+
         return pageResult;
+        // 先声明变量；
     }
-    //getter、setter
-    public List<T> getRecords() {
-        return records;
-    }
-    public void setRecords(List<T> records) {
-        this.records = records;
-    }
-    public Long getTotal() {
-        return total;
-    }
-    public void setTotal(Long total) {
-        this.total = total;
-    }
-    public Long getPages() {
-        return pages;
-    }
-    public void setPages(Long pages) {
-        this.pages = pages;
-    }
+
 }
 
 

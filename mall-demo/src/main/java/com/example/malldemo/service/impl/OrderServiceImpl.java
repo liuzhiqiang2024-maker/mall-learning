@@ -1,4 +1,5 @@
 package com.example.malldemo.service.impl;
+import com.example.malldemo.dto.OrderQueryDTO;
 import com.example.malldemo.dto.PageResult;
 import com.example.malldemo.entity.Orders;
 import com.example.malldemo.entity.Product;
@@ -13,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.malldemo.exception.BusinessException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 
 import lombok.extern.slf4j.Slf4j;
@@ -68,7 +70,22 @@ public class OrderServiceImpl implements OrderService {
         // 3. 查询总条数
         Long total = orderMapper.selectOrderCount();
         // 4. 调用我们写好的静态方法组装分页结果
-        return PageResult.build(records, total, pageSize);
+        return PageResult.build(records, total,pageNum, pageSize);
+    }
+    @Override
+    public PageResult<Orders>queryOrderPage(OrderQueryDTO queryDTO) {
+        //1.查询总数
+        Long total =orderMapper.countOrderPage(queryDTO);
+        //没有数据直接返回空
+        if(total==0){
+            return PageResult.build(Collections.emptyList(),total,queryDTO.getPageNum(),queryDTO.getPageSize());
+        }
+        // 2. 计算offset
+        Integer offset = (queryDTO.getPageNum() - 1) * queryDTO.getPageSize();
+        // 3. 查询订单列表
+        List<Orders> orderList = orderMapper.selectOrderPage(queryDTO, offset, queryDTO.getPageSize());
+        // 4. 组装分页对象返回
+        return PageResult.build(orderList, total, queryDTO.getPageNum(), queryDTO.getPageSize());
     }
 
 

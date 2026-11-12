@@ -1,8 +1,10 @@
 package com.example.malldemo.controller;
 
 import com.example.malldemo.common.Result;
+import com.example.malldemo.dto.OrderQueryDTO;
 import com.example.malldemo.dto.PageResult;
 import com.example.malldemo.service.OrderService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -41,5 +43,13 @@ public class OrderController {
         PageResult<Orders>pageResult=orderService.getOrderPage(pageNum,pageSize);
         //包装成统一Result返回
         return Result.success(pageResult);
+    }
+    @PostMapping("/queryPage")
+    public Result<PageResult<Orders>> queryOrders(@RequestBody
+                                                      @Valid OrderQueryDTO queryDTO
+    ) {
+        PageResult<Orders>pageResult=orderService.queryOrderPage(queryDTO);
+        return Result.success(pageResult);
+
     }
 }

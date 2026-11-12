@@ -3,9 +3,11 @@ import com.example.malldemo.exception.BusinessException;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-
+import org.springframework.validation.FieldError;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -35,4 +37,15 @@ public class GlobalExceptionHandler {
         }
         return Result.fail(400,"参数校验失败",errorMsgList);
     }
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public Result<?> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
+        List<FieldError> fieldErrors = e.getBindingResult().getFieldErrors();
+        List<String> errorsMsgList = new ArrayList<>();
+        for(FieldError item:fieldErrors){
+            String msg = item.getField() + "：" + item.getDefaultMessage();
+            errorsMsgList.add(msg);
+        }
+        return Result.fail(400,"参数校验失败",errorsMsgList);
+    }
+
 }

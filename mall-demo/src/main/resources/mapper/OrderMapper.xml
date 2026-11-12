@@ -5,15 +5,25 @@
 
     <!-- 这里放你之前已经写好的所有SQL：根据id查询订单、新增订单等 -->
 
-    <!-- 新增：分页查询当前页订单 -->
-    <select id="selectOrderPage" resultType="com.example.malldemo.entity.Orders">
-        select id, user_id, product_id, quantity, total_price, order_status, create_time
-        from orders
-                 limit #{offset}, #{pageSize}
+    <!-- 统计总数：只有where条件，不要limit！！ -->
+    <select id="countOrderPage" resultType="java.lang.Long">
+        select count(*) from orders
+        <where>
+            <if test="query.userId != null">
+                user_id = #{query.userId}
+            </if>
+        </where>
     </select>
 
-    <!-- 新增：查询订单总条数 -->
-    <select id="selectOrderCount" resultType="java.lang.Long">
-        select count(*) from orders
+    <!-- 分页查询列表：才有limit，三个参数 -->
+    <select id="selectOrderPage" resultType="Orders">
+        select * from orders
+        <where>
+            <if test="query.userId != null">
+                user_id = #{query.userId}
+            </if>
+        </where>
+        limit #{offset}, #{pageSize}
     </select>
+
 </mapper>

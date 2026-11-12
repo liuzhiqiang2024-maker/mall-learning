@@ -1,4 +1,5 @@
 package com.example.malldemo.mapper;
+import com.example.malldemo.dto.OrderQueryDTO;
 import com.example.malldemo.dto.PageResult;
 import com.example.malldemo.entity.Orders;
 import org.apache.ibatis.annotations.*;
@@ -18,5 +19,8 @@ public interface OrderMapper  {
 
     List<Orders> selectOrderPage(@Param("offset")Integer offset,@Param("pageSize")Integer pageSize);
     Long selectOrderCount();
+
+    List<Orders> selectOrderPage(@Param("query")OrderQueryDTO queryDTO,@Param("offset")Integer offset,@Param("pageSize")Integer pageSize);
+    Long countOrderPage(@Param("query")OrderQueryDTO queryDTO);
 
 }
