@@ -5,9 +5,9 @@ import java.time.LocalDateTime;
 @Data
 public class Product {
     private Long id;
-    private String name;
+    private String  productName;
     private BigDecimal price;
     private Integer stock;
-    private Integer status;
+    private Integer productStatus;
     private LocalDateTime createTime;
 }

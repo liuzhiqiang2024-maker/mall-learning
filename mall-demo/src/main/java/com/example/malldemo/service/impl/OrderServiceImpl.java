@@ -1,4 +1,5 @@
 package com.example.malldemo.service.impl;
+import com.example.malldemo.dto.CreateOrderDTO;
 import com.example.malldemo.dto.OrderQueryDTO;
 import com.example.malldemo.dto.OrderStatusUpdateDTO;
 import com.example.malldemo.dto.PageResult;
@@ -7,7 +8,6 @@ import com.example.malldemo.entity.Product;
 import com.example.malldemo.mapper.OrderMapper;
 import com.example.malldemo.mapper.ProductMapper;
 import com.example.malldemo.service.OrderService;
-import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -17,9 +17,10 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
-import lombok.extern.slf4j.Slf4j;
+
 @Slf4j
 @Service
 public class OrderServiceImpl implements OrderService {
@@ -29,23 +30,29 @@ public class OrderServiceImpl implements OrderService {
     private ProductMapper productMapper;
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Orders createOrder(Long productId, Integer count, Long userId){
+    public Orders createOrder(CreateOrderDTO dto){
+        Long productId = dto.getProductId();
+        Integer quantity = dto.getQuantity();
+        Long userId = dto.getUserId();
         Product product=productMapper.findById(productId);
         if(product==null){
             throw new BusinessException(400,"商品不存在");
         }
-        int rows=productMapper.deductStock(productId,count);
+        if(!Objects.equals(product.getProductStatus(),1)){
+            throw new BusinessException(400,"商品已下架，无法下单");
+        }
+        int rows=productMapper.deductStock(productId,quantity);
         if(rows==0){
-            log.warn("库存不足，商品ID={}, 需求={}", productId, count);
+            log.warn("库存不足，商品ID={}, 需求={}", productId, quantity);
             throw new BusinessException(400,"库存不足");
         }
-        BigDecimal totalPrice=product.getPrice().multiply(BigDecimal.valueOf(count));
+        BigDecimal totalPrice=product.getPrice().multiply(BigDecimal.valueOf(quantity));
         Orders order=new Orders();
         order.setUserId(userId);
         order.setProductId(productId);
-        order.setQuantity(count);
+        order.setQuantity(quantity);
         order.setTotalPrice(totalPrice);
-        order.setOrderStatus(0); // 0代表未支付
+        order.setOrderStatus(1); // 1待支付
         order.setCreateTime(LocalDateTime.now());
         orderMapper.insertOrder(order);
         log.info("订单创建成功，ID={}",order.getId());

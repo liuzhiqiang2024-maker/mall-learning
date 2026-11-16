@@ -20,7 +20,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BusinessException.class)
     public Result<?>handleBusinessException(BusinessException e){
         log.warn("业务异常：{}",e.getMessage());
-        return Result.fail(500,e.getMessage());
+        return Result.fail(e.getCode(),e.getMessage());
     }
     // 兜底捕获所有其他异常
     @ExceptionHandler(Exception.class)

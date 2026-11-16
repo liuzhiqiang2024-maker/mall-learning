@@ -7,9 +7,17 @@ import org.apache.ibatis.annotations.Mapper;
 
 @Mapper
 public interface ProductMapper {
-    @Select("SELECT id,name,price,stock,status,create_time FROM product WHERE id= #{id}")
+
     Product findById(@Param("id") Long id);
 
-    @Update("UPDATE product SET stock =stock - #{count} WHERE id =#{id} AND stock >=#{count}")
-    int deductStock(@Param("id") Long id, @Param("count") Integer count);
+
+
+    /**
+     * 原子扣减库存
+     * @param productId 商品id
+     * @param quantity 要扣减的数量
+     * @return 数据库受影响行数，0=扣减失败（库存不足）
+     */
+    int deductStock(@Param("productId") Long productId,@Param("quantity")Integer quantity);
+
 }

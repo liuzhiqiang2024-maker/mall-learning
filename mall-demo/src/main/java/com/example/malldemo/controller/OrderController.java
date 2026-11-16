@@ -1,10 +1,7 @@
 package com.example.malldemo.controller;
 
 import com.example.malldemo.common.Result;
-import com.example.malldemo.dto.OrderQueryDTO;
-import com.example.malldemo.dto.OrderStatusUpdateDTO;
-import com.example.malldemo.dto.OrderStatusVO;
-import com.example.malldemo.dto.PageResult;
+import com.example.malldemo.dto.*;
 import com.example.malldemo.mapper.OrderMapper;
 import com.example.malldemo.service.OrderService;
 import jakarta.validation.Valid;
@@ -24,12 +21,9 @@ public class OrderController {
     private OrderMapper orderMapper;
 
     @PostMapping("/create")
-    public Result<Orders> createOrder(
-            @RequestParam Long productId,
-            @RequestParam Integer count,
-            @RequestParam Long userId
-    ){
-        Orders order= orderService.createOrder(productId,count,userId);
+    public Result<Orders> createOrder(@RequestBody @Valid CreateOrderDTO dto)
+    {
+        Orders order= orderService.createOrder(dto);
         return Result.success(order);
     }
     @GetMapping("/getById")

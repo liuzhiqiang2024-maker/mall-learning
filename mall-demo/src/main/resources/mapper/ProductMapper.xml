@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- namespace 绑定你的Mapper接口，包名要和你自己的一致 -->
+<mapper namespace="com.example.malldemo.mapper.ProductMapper">
+
+    <select id="findById" resultType="com.example.malldemo.entity.Product">
+        SELECT id, product_name, price, stock, product_status, create_time
+        FROM product
+        WHERE id = #{id}
+    </select>
+
+    <update id="deductStock">
+        UPDATE product
+        SET stock = stock - #{quantity}
+        WHERE id = #{productId} AND stock >= #{quantity}
+    </update>
+
+</mapper>
