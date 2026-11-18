@@ -1,8 +1,5 @@
 package com.example.malldemo.service.impl;
-import com.example.malldemo.dto.CreateOrderDTO;
-import com.example.malldemo.dto.OrderQueryDTO;
-import com.example.malldemo.dto.OrderStatusUpdateDTO;
-import com.example.malldemo.dto.PageResult;
+import com.example.malldemo.dto.*;
 import com.example.malldemo.entity.Orders;
 import com.example.malldemo.entity.Product;
 import com.example.malldemo.mapper.OrderMapper;
@@ -58,18 +55,7 @@ public class OrderServiceImpl implements OrderService {
         log.info("订单创建成功，ID={}",order.getId());
         return order;
     }
-    @Override
-    public Orders getOrderById(Long orderId) {
-        // 1.调用mapper查询
-        Orders orders=orderMapper.selectOrderById(orderId);
-        // 2.业务判断，如果查询结果为null，抛自定义业务异常
-        if(orders==null){
-            throw new BusinessException(500,"订单不存在");
-        }
-        // 3.查到直接返回订单对象
-        return orders;
 
-    }
     @Override
     public PageResult<Orders> getOrderPage(Integer pageNum, Integer pageSize) {
         // 1. 计算偏移量
@@ -138,6 +124,14 @@ public class OrderServiceImpl implements OrderService {
         }
         // 6. 更新成功，重新查询最新订单返回
         return orderMapper.selectOrderById(dto.getOrderId());
+    }
+    @Override
+    public OrderDetailVO getOrderById(Long orderId){
+        OrderDetailVO detail=orderMapper.selectOrderDetailById(orderId);
+        if(detail==null){
+            throw new BusinessException(400,"订单不存在");
+        }
+        return detail;
     }
 
 }

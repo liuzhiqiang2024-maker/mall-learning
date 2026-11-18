@@ -1,4 +1,5 @@
 package com.example.malldemo.mapper;
+import com.example.malldemo.dto.OrderDetailVO;
 import com.example.malldemo.dto.OrderQueryDTO;
 import com.example.malldemo.dto.OrderStatusUpdateDTO;
 import com.example.malldemo.dto.PageResult;
@@ -26,6 +27,6 @@ public interface OrderMapper  {
     Long countOrderPage(@Param("query")OrderQueryDTO queryDTO);
 
     int updateOrderStatus(@Param("orderId")Long orderId,@Param("newStatus")Integer  newStatus);
-
+    OrderDetailVO selectOrderDetailById(@Param("orderId") Long orderId);
 
 }

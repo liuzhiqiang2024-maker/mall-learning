@@ -27,12 +27,12 @@ public class OrderController {
         return Result.success(order);
     }
     @GetMapping("/getById")
-    public Result<Orders> getOrderById(@RequestParam(required = false)
+    public Result<OrderDetailVO> getOrderById(@RequestParam(required = false)
                                            @NotNull(message = "订单ID不能为空")
                                            @Positive(message = "订单ID必须大于0")
                                             Long orderId){
-        Orders orders=orderService.getOrderById(orderId);
-        return Result.success(orders);
+        OrderDetailVO detail =orderService.getOrderById(orderId);
+        return Result.success(detail);
     }
     @GetMapping("/page")
     public Result<PageResult<Orders>>getOrders(
