@@ -14,7 +14,5 @@ public class OrderQueryDTO {
     @Positive
     private Integer pageSize;
 
-    @NotNull
-    @Positive
-    private Long userId;
+
 }

@@ -27,10 +27,10 @@ public class OrderServiceImpl implements OrderService {
     private ProductMapper productMapper;
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Orders createOrder(CreateOrderDTO dto){
+    public Orders createOrder(CreateOrderDTO dto,Long currentUserId) {
         Long productId = dto.getProductId();
         Integer quantity = dto.getQuantity();
-        Long userId = dto.getUserId();
+
         Product product=productMapper.findById(productId);
         if(product==null){
             throw new BusinessException(400,"商品不存在");
@@ -45,7 +45,7 @@ public class OrderServiceImpl implements OrderService {
         }
         BigDecimal totalPrice=product.getPrice().multiply(BigDecimal.valueOf(quantity));
         Orders order=new Orders();
-        order.setUserId(userId);
+        order.setUserId(currentUserId);
         order.setProductId(productId);
         order.setQuantity(quantity);
         order.setTotalPrice(totalPrice);
@@ -57,38 +57,33 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public PageResult<Orders> getOrderPage(Integer pageNum, Integer pageSize) {
+    public PageResult<Orders> getOrderPage(Integer pageNum, Integer pageSize,Long currentUserId) {
         // 1. 计算偏移量
         Integer offset = (pageNum - 1) * pageSize;
-        // 2. 查询当前页数据
-        List<Orders> records = orderMapper.selectOrderPage(offset, pageSize);
-        // 3. 查询总条数
-        Long total = orderMapper.selectOrderCount();
-        // 4. 调用我们写好的静态方法组装分页结果
+        // 2. 只查当前用户的订单
+        List<Orders> records = orderMapper.selectOrderPageByUser(currentUserId,offset, pageSize);
+        // 3. 查总数，总数也必须按照同一个userId统计
+        Long total = orderMapper.countOrderByUser(currentUserId);
+        // 4. 调用我们写好的静态方法组装分页结果,组装
         return PageResult.build(records, total,pageNum, pageSize);
     }
     @Override
-    public PageResult<Orders>queryOrderPage(OrderQueryDTO queryDTO) {
-        //1.查询总数
-        Long total =orderMapper.countOrderPage(queryDTO);
-        //没有数据直接返回空
-        if(total==0){
-            return PageResult.build(Collections.emptyList(),total,queryDTO.getPageNum(),queryDTO.getPageSize());
-        }
-        // 2. 计算offset
-        Integer offset = (queryDTO.getPageNum() - 1) * queryDTO.getPageSize();
-        // 3. 查询订单列表
-        List<Orders> orderList = orderMapper.selectOrderPage(queryDTO, offset, queryDTO.getPageSize());
-        // 4. 组装分页对象返回
-        return PageResult.build(orderList, total, queryDTO.getPageNum(), queryDTO.getPageSize());
+    public PageResult<Orders>queryOrderPage(OrderQueryDTO queryDTO,Long currentUserId) {
+        return getOrderPage(queryDTO.getPageNum(), queryDTO.getPageSize(), currentUserId);
     }
     @Override
-    public Orders updateOrderStatus(OrderStatusUpdateDTO dto) {
+    public Orders updateOrderStatus(OrderStatusUpdateDTO dto,Long currentUserId) {
         //1.查询订单
         Orders order = orderMapper.selectOrderById(dto.getOrderId());
         //2.判断订单是否存在
         if (order == null) {
-            throw new BusinessException(400, "订单不存在");
+            throw new BusinessException(404, "订单不存在");
+        }
+        //3.不是自己的订单也返回404
+        if(!Objects.equals(order.getUserId(),currentUserId)){
+            log.warn("越权修改订单状态：orderId={},订单归属UserId={},当前userId={},目标状态={}",
+                    dto.getOrderId(),order.getUserId(),currentUserId,dto.getStatus());
+            throw new BusinessException(404,"订单不存在");
         }
         Integer oldStatus = order.getOrderStatus();
         Integer newStatus = dto.getStatus();
@@ -126,10 +121,16 @@ public class OrderServiceImpl implements OrderService {
         return orderMapper.selectOrderById(dto.getOrderId());
     }
     @Override
-    public OrderDetailVO getOrderById(Long orderId){
+    public OrderDetailVO getOrderById(Long orderId,Long currentUserId) {
         OrderDetailVO detail=orderMapper.selectOrderDetailById(orderId);
+        //1.订单真不存在，404
         if(detail==null){
-            throw new BusinessException(400,"订单不存在");
+            throw new BusinessException(404,"订单不存在");
+        }
+        //2.订单存在，但不是当前用户，也返回404
+        if(!Objects.equals(detail.getUserId(),currentUserId)){
+            log.warn("越权访问订单：orderId={},订单归属userId={}，当前userId={}",orderId,detail.getUserId(),currentUserId);
+            throw new BusinessException(404,"订单不存在");
         }
         return detail;
     }

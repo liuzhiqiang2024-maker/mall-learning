@@ -20,13 +20,12 @@ public interface OrderMapper  {
 
     Orders selectOrderById(Long orderId);
 
-    List<Orders> selectOrderPage(@Param("offset")Integer offset,@Param("pageSize")Integer pageSize);
-    Long selectOrderCount();
+   List<Orders>selectOrderPageByUser(@Param("userId") Long userId,
+                                     @Param("offset") Integer offset,
+                                     @Param("pageSize") Integer pageSize);
+   Long countOrderByUser(@Param("userId")Long userId);
 
-    List<Orders> selectOrderPage(@Param("query")OrderQueryDTO queryDTO,@Param("offset")Integer offset,@Param("pageSize")Integer pageSize);
-    Long countOrderPage(@Param("query")OrderQueryDTO queryDTO);
-
-    int updateOrderStatus(@Param("orderId")Long orderId,@Param("newStatus")Integer  newStatus);
-    OrderDetailVO selectOrderDetailById(@Param("orderId") Long orderId);
+   int updateOrderStatus(@Param("orderId")Long orderId,@Param("newStatus")Integer  newStatus);
+   OrderDetailVO selectOrderDetailById(@Param("orderId") Long orderId);
 
 }

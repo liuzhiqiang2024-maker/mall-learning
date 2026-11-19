@@ -41,26 +41,20 @@
 
     <!-- 这里放你之前已经写好的所有SQL：根据id查询订单、新增订单等 -->
 
-    <!-- 统计总数：只有where条件，不要limit！！ -->
-    <select id="countOrderPage" resultType="java.lang.Long">
+
+
+    <select id="countOrderByUser" resultType="java.lang.Long">
         select count(*) from orders
-        <where>
-            <if test="query.userId != null">
-                user_id = #{query.userId}
-            </if>
-        </where>
+        where user_id=#{userId}
+    </select>
+    <select id="selectOrderPageByUser" resultType="Orders">
+        select * from orders
+        where user_id=#{userId}
+        order by id desc
+        limit #{offset},#{pageSize}
     </select>
 
-    <!-- 分页查询列表：才有limit，三个参数 -->
-    <select id="selectOrderPage" resultType="Orders">
-        select * from orders
-        <where>
-            <if test="query.userId != null">
-                user_id = #{query.userId}
-            </if>
-        </where>
-        limit #{offset}, #{pageSize}
-    </select>
+
     <!-- 根据id查询订单 -->
     <select id="selectOrderById" resultType="com.example.malldemo.entity.Orders" >
         select id, user_id, product_id, quantity,order_status, total_price, create_time

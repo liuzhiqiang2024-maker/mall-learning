@@ -5,9 +5,7 @@ import lombok.Data;
 
 @Data
 public class CreateOrderDTO {
-    @NotNull(message = "用户id不能为空")
-    @Positive(message = "用户id必须大于0")
-    private Long userId;
+
 
     @NotNull(message = "商品id不能为空")
     @Positive(message = "商品id必须大于0")

@@ -6,10 +6,12 @@ import jakarta.validation.Valid;
 
 
 public interface OrderService {
-    Orders createOrder(CreateOrderDTO dto);
 
-    PageResult<Orders> getOrderPage(Integer pageNum, Integer pageSize);
-    PageResult<Orders>queryOrderPage(OrderQueryDTO orderQueryDTO);
-    OrderDetailVO getOrderById(Long orderId);
-    Orders updateOrderStatus(@Valid OrderStatusUpdateDTO dto);
+
+    PageResult<Orders> getOrderPage(Integer pageNum, Integer pageSize,Long currentUserId);
+    PageResult<Orders>queryOrderPage(OrderQueryDTO orderQueryDTO,Long currentUserId);
+    OrderDetailVO getOrderById(Long orderId,Long currentUserId);
+    Orders updateOrderStatus(@Valid OrderStatusUpdateDTO dto,Long currentUserId);
+    Orders createOrder(CreateOrderDTO dto,Long currentUserId);
+
 }
