@@ -12,15 +12,25 @@ import org.springframework.validation.FieldError;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-
+import org.springframework.web.servlet.resource.NoResourceFoundException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public Result<?> handleMethodNotSupported(HttpRequestMethodNotSupportedException e) {
+        return Result.fail(405, "请求方法不支持：" + e.getMethod() + "，该接口只支持 " + e.getSupportedHttpMethods());
+    }
+
     // 捕获我们自定义业务异常
     @ExceptionHandler(BusinessException.class)
     public Result<?>handleBusinessException(BusinessException e){
         log.warn("业务异常：{}",e.getMessage());
         return Result.fail(e.getCode(),e.getMessage());
+    }
+    @ExceptionHandler(NoResourceFoundException.class)
+    public Result<?> handleNoResourceFoundException(NoResourceFoundException e) {
+        return Result.fail(404, "接口不存在：" + e.getResourcePath());
     }
     // 兜底捕获所有其他异常
     @ExceptionHandler(Exception.class)
