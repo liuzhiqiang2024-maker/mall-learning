@@ -4,6 +4,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.Data;
 
+// POST 分页查询从请求体读取这些参数。页码从 1 开始，Service 会据此计算 SQL 偏移量。
 @Data
 public class OrderQueryDTO {
     @NotNull

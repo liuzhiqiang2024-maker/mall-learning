@@ -25,6 +25,7 @@ public class OrderServiceImpl implements OrderService {
     private OrderMapper orderMapper;
     @Autowired
     private ProductMapper productMapper;
+    // 扣库存和写入订单共用事务。方法抛出异常时，Spring 会回滚这两次写入。
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Orders createOrder(CreateOrderDTO dto,Long currentUserId) {
@@ -35,22 +36,28 @@ public class OrderServiceImpl implements OrderService {
         if(product==null){
             throw new BusinessException(400,"商品不存在");
         }
+        // 商品状态 1 表示上架。这里使用查到的商品状态判断能否下单。
         if(!Objects.equals(product.getProductStatus(),1)){
             throw new BusinessException(400,"商品已下架，无法下单");
         }
+        // Mapper 在一条 SQL 中检查并扣减库存，返回这次更新影响的行数。
         int rows=productMapper.deductStock(productId,quantity);
         if(rows==0){
             log.warn("库存不足，商品ID={}, 需求={}", productId, quantity);
             throw new BusinessException(400,"库存不足");
         }
+        // 用数据库查出的单价乘以购买数量，BigDecimal 用于十进制金额计算。
         BigDecimal totalPrice=product.getPrice().multiply(BigDecimal.valueOf(quantity));
         Orders order=new Orders();
         order.setUserId(currentUserId);
         order.setProductId(productId);
+        order.setProductName(product.getProductName());
         order.setQuantity(quantity);
+        order.setUnitPrice(product.getPrice());
         order.setTotalPrice(totalPrice);
-        order.setOrderStatus(1); // 1待支付
+        order.setOrderStatus(1); // 新订单从待支付（1）开始
         order.setCreateTime(LocalDateTime.now());
+        // 插入成功后，MyBatis 将数据库生成的主键回填到 order.id。
         orderMapper.insertOrder(order);
         log.info("订单创建成功，ID={}",order.getId());
         return order;
@@ -58,28 +65,25 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public PageResult<Orders> getOrderPage(Integer pageNum, Integer pageSize,Long currentUserId) {
-        // 1. 计算偏移量
+        // 页码从 1 开始。第 2 页每页 10 条时，跳过前 10 条。
         Integer offset = (pageNum - 1) * pageSize;
-        // 2. 只查当前用户的订单
+        // 分页记录和总数分开查询，两次都用当前用户 ID 筛选。
         List<Orders> records = orderMapper.selectOrderPageByUser(currentUserId,offset, pageSize);
-        // 3. 查总数，总数也必须按照同一个userId统计
         Long total = orderMapper.countOrderByUser(currentUserId);
-        // 4. 调用我们写好的静态方法组装分页结果,组装
         return PageResult.build(records, total,pageNum, pageSize);
     }
     @Override
     public PageResult<Orders>queryOrderPage(OrderQueryDTO queryDTO,Long currentUserId) {
+        // 两种分页接口共用同一套查询逻辑。
         return getOrderPage(queryDTO.getPageNum(), queryDTO.getPageSize(), currentUserId);
     }
     @Override
     public Orders updateOrderStatus(OrderStatusUpdateDTO dto,Long currentUserId) {
-        //1.查询订单
         Orders order = orderMapper.selectOrderById(dto.getOrderId());
-        //2.判断订单是否存在
+        // 查不到订单或订单归属其他用户时，统一返回业务码 404，避免透露订单是否存在。
         if (order == null) {
             throw new BusinessException(404, "订单不存在");
         }
-        //3.不是自己的订单也返回404
         if(!Objects.equals(order.getUserId(),currentUserId)){
             log.warn("越权修改订单状态：orderId={},订单归属UserId={},当前userId={},目标状态={}",
                     dto.getOrderId(),order.getUserId(),currentUserId,dto.getStatus());
@@ -87,47 +91,46 @@ public class OrderServiceImpl implements OrderService {
         }
         Integer oldStatus = order.getOrderStatus();
         Integer newStatus = dto.getStatus();
-        //3.判断新状态是否合法，只能0.1，2，3，4
+        // 状态值范围为 0 到 4。入口 DTO 要求目标状态为正数，0 可作为已有订单的旧状态。
         if (!Set.of(0,1, 2, 3, 4).contains(newStatus)) {
             throw new BusinessException(400, "订单状态参数非法");
         }
-        //4.状态流转校验
+        // 根据旧状态判断本次流转是否允许。本方法的业务动作限于更新订单状态字段。
         boolean allow = false;
         if (oldStatus == 0) {
             if(newStatus ==1){
                 allow = true;
             }
         }else if (oldStatus == 1) {
-            //待付款；可以转2，3
+            // 待支付（1）允许转到 2 或 3。
             if (newStatus == 2 || newStatus == 3) {
                 allow = true;
             }
         } else if (oldStatus == 2) {
-            //已支付：只能转4
+            // 已支付（2）只能转到 4。
             if (newStatus == 4) {
                 allow = true;
             }
         }
-        //oldStatus=3、4 是终态，allow保持false
+        // 状态 3 和 4 为终态，allow 保持为 false。
         if (!allow) {
             throw new BusinessException(400, "订单状态不允许变更");
         }
-        // 5. 执行更新
+        // SQL 只按订单 ID 更新，并发请求可能基于同一个旧状态通过校验。
         int rows = orderMapper.updateOrderStatus(dto.getOrderId(), newStatus);
         if (rows != 1) {
             throw new BusinessException(400,"订单状态更新失败");
         }
-        // 6. 更新成功，重新查询最新订单返回
+        // 更新后重新读取订单，调用方从结果中取出订单 ID 和状态。
         return orderMapper.selectOrderById(dto.getOrderId());
     }
     @Override
     public OrderDetailVO getOrderById(Long orderId,Long currentUserId) {
         OrderDetailVO detail=orderMapper.selectOrderDetailById(orderId);
-        //1.订单真不存在，404
+        // 未查到详情和详情归属其他用户时共用业务码 404。
         if(detail==null){
             throw new BusinessException(404,"订单不存在");
         }
-        //2.订单存在，但不是当前用户，也返回404
         if(!Objects.equals(detail.getUserId(),currentUserId)){
             log.warn("越权访问订单：orderId={},订单归属userId={}，当前userId={}",orderId,detail.getUserId(),currentUserId);
             throw new BusinessException(404,"订单不存在");

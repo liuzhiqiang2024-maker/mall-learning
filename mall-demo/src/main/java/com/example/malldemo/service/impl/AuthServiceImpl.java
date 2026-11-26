@@ -20,15 +20,17 @@ public class AuthServiceImpl  implements AuthService {
 
     @Override
     public LoginVO login(LoginDTO dto) {
-        //1.按照用户名查人
+        // 调用 UserMapper.xml 中的查询，读取用户信息和数据库里的密码哈希。
         User user=userMapper.findByUsername(dto.getUsername());
-        //2.用户不存在或者密码不匹配（同一个错误提示语）
+        // BCrypt 的 matches 用提交的密码和已存的哈希做校验。
+        // 用户不存在时，|| 会短路，跳过密码校验。两种失败使用相同提示。
         if(user==null||!passwordEncoder.matches(dto.getPassword(),user.getPassword())){
             throw new BusinessException(401,"用户名或密码错误");
         }
-        //3.签发token
+        // 校验通过后，TokenStore 生成随机 token 并记录它对应的用户。
         String token= tokenStore.issue(user.getId());
 
+        // LoginVO 只公开登录接口需要返回的字段，密码哈希留在服务端。
         LoginVO vo=new LoginVO();
         vo.setUserId(user.getId());
         vo.setUsername(user.getUsername());

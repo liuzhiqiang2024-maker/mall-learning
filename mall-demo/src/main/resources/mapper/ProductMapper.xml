@@ -1,15 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<!-- namespace 绑定你的Mapper接口，包名要和你自己的一致 -->
+<!-- namespace 对应 ProductMapper 接口，各语句的 id 对应接口方法名。 -->
 <mapper namespace="com.example.malldemo.mapper.ProductMapper">
 
+    <!-- 下单时用这条查询读取商品当前单价及上架状态。 -->
     <select id="findById" resultType="com.example.malldemo.entity.Product">
         SELECT id, product_name, price, stock, product_status, create_time
         FROM product
         WHERE id = #{id}
     </select>
 
+    <!-- 库存检查和扣减在同一条 UPDATE 内完成。条件不匹配时，影响行数为 0。 -->
     <update id="deductStock">
         UPDATE product
         SET stock = stock - #{quantity}

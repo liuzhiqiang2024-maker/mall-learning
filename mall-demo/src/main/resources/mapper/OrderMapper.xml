@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- namespace 对应 Java Mapper 的全限定名，各语句的 id 对应接口方法名。 -->
 <mapper namespace="com.example.malldemo.mapper.OrderMapper">
 
     <resultMap id="orderDetailMap" type="com.example.malldemo.dto.OrderDetailVO">
-        <!-- 订单本身的字段 -->
+        <!-- column 是 SQL 结果列，property 是 Java 详情对象的属性。 -->
         <id property="id" column="id"/>
         <result property="userId" column="user_id"/>
         <result property="productId" column="product_id"/>
@@ -13,7 +14,7 @@
         <result property="orderStatus" column="order_status"/>
         <result property="createTime" column="create_time"/>
 
-        <!-- 关联出来的商品对象 -->
+        <!-- association 把带 p_ 前缀的结果列填入嵌套的 product 对象。 -->
         <association property="product"
                      javaType="com.example.malldemo.dto.ProductVO"
                      columnPrefix="p_">
@@ -22,6 +23,7 @@
             <result property="price" column="price"/>
         </association>
     </resultMap>
+    <!-- LEFT JOIN 保留订单行。商品单价来自商品表当前值，订单总价是下单时保存的金额。 -->
     <select id="selectOrderDetailById" resultMap="orderDetailMap">
         SELECT
             o.id,
@@ -31,15 +33,15 @@
             o.total_price,
             o.order_status,
             o.create_time,
-            p.id            AS p_id,
-            p.product_name  AS p_product_name,
-            p.price         AS p_price
+            o.product_id    AS p_id,
+            o.product_name  AS p_product_name,
+            o.unit_price    AS p_price
         FROM orders o
-        LEFT JOIN product p ON o.product_id=p.id
-        WHERE o.id=#{orderId}
+        WHERE o.id = #{orderId}
     </select>
 
-    <!-- 这里放你之前已经写好的所有SQL：根据id查询订单、新增订单等 -->
+
+    <!-- 订单总数和分页查询按同一个用户 ID 筛选。 -->
 
 
 
@@ -47,6 +49,7 @@
         select count(*) from orders
         where user_id=#{userId}
     </select>
+    <!-- 按订单 ID 倒序取当页，offset 是跳过的条数，pageSize 是最多返回的条数。 -->
     <select id="selectOrderPageByUser" resultType="Orders">
         select * from orders
         where user_id=#{userId}
@@ -55,13 +58,13 @@
     </select>
 
 
-    <!-- 根据id查询订单 -->
+    <!-- 更新前读取订单归属和旧状态，更新后也用这条查询读取订单。 -->
     <select id="selectOrderById" resultType="com.example.malldemo.entity.Orders" >
         select id, user_id, product_id, quantity,order_status, total_price, create_time
         from orders
         where id = #{orderId}
     </select>
-    <!-- 更新订单状态 -->
+    <!-- 这里按订单 ID 更新状态，旧状态在 Service 中读取并校验。 -->
     <update id="updateOrderStatus">
         update orders
         set order_status=#{newStatus}

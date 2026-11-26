@@ -3,6 +3,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.Data;
 
+// 客户端提交商品 ID 和购买数量。服务端从登录身份取得用户 ID，再按数据库单价计算总价。
 @Data
 public class CreateOrderDTO {
 
